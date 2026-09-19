@@ -1,0 +1,161 @@
+{
+  "log": {
+    "loglevel": "warning",
+    "dnsLog": false
+  },
+  "dns": {
+    "servers": [
+      "https://dns.google/dns-query",
+      "8.8.8.8",
+      "8.8.4.4"
+    ],
+    "queryStrategy": "UseIP"
+  },
+  "inbounds": [
+    {
+      "tag": "vless-ws-in",
+      "listen": "127.0.0.1",
+      "port": 8081,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+            "level": 0,
+            "email": "normal@cazar"
+          },
+          {
+            "id": "f9e8d7c6-b5a4-3210-fedc-ba9876543210",
+            "level": 0,
+            "email": "ai@cazar"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "none",
+        "wsSettings": {
+          "path": "/ws-cazar-gate",
+          "heartbeatPeriod": 20
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": true
+      }
+    },
+    {
+      "tag": "vless-xhttp-in",
+      "listen": "127.0.0.1",
+      "port": 8082,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+            "level": 0,
+            "email": "normal@cazar"
+          },
+          {
+            "id": "f9e8d7c6-b5a4-3210-fedc-ba9876543210",
+            "level": 0,
+            "email": "ai@cazar"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "none",
+        "xhttpSettings": {
+          "path": "/xh-cazar-gate"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": true
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "direct-normal",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      },
+      "sockopt": {
+        "tcpFastOpen": true,
+        "tcpCongestion": "bbr",
+        "tcpKeepAliveInterval": 20
+      }
+    },
+    {
+      "tag": "direct-ai",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIPv6"
+      },
+      "sockopt": {
+        "tcpFastOpen": true,
+        "tcpCongestion": "bbr",
+        "tcpKeepAliveInterval": 20
+      }
+    },
+    {
+      "tag": "block",
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "none"
+        }
+      }
+    }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "ip": [
+          "10.0.0.0/8",
+          "172.16.0.0/12",
+          "192.168.0.0/16",
+          "169.254.0.0/16",
+          "127.0.0.0/8",
+          "::1/128",
+          "fc00::/7",
+          "fe80::/10"
+        ],
+        "outboundTag": "block"
+      },
+      {
+        "type": "field",
+        "user": ["ai@cazar"],
+        "outboundTag": "direct-ai"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "openai.com",
+          "chatgpt.com",
+          "oaistatic.com",
+          "oaiusercontent.com",
+          "anthropic.com",
+          "claude.ai",
+          "gemini.google.com",
+          "generativelanguage.googleapis.com"
+        ],
+        "outboundTag": "direct-ai"
+      },
+      {
+        "type": "field",
+        "port": "0-65535",
+        "outboundTag": "direct-normal"
+      }
+    ]
+  }
+}
