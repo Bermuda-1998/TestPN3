@@ -269,7 +269,6 @@ func main() {
 
 	xhProxy := httputil.NewSingleHostReverseProxy(xhBackend)
 	xhProxy.Transport = proxyTransport
-	// بهینه‌سازی شده جهت جلوگیری از قطعه‌قطعه شدن داده‌ها و دستیابی به حداکثر توان دانلود
 	xhProxy.FlushInterval = 20 * time.Millisecond
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -632,19 +631,11 @@ const dashboardHTML = `<!DOCTYPE html>
 
   <label class="section-label">3. Transport Protocol</label>
   <div class="toggle-group">
-    <div class="toggle-btn active" id="btnProtoXHTTP" onclick="setProtocol('xhttp')">XHTTP</div>
+    <div class="toggle-btn active" id="btnProtoXHTTP" onclick="setProtocol('xhttp')">XHTTP (Anti-DPI)</div>
     <div class="toggle-btn" id="btnProtoWS" onclick="setProtocol('ws')">WebSocket</div>
   </div>
 
-  <div id="xhttpModeSection">
-    <label class="section-label">4. XHTTP Engine Mode</label>
-    <div class="toggle-group">
-      <div class="toggle-btn active" id="btnXhTurbo" onclick="setXHTTPMode('stream-up')">Turbo Download (Stream)</div>
-      <div class="toggle-btn" id="btnXhStealth" onclick="setXHTTPMode('packet-up')">Stealth (Anti-DPI)</div>
-    </div>
-  </div>
-
-  <label class="section-label">5. Outbound Routing Profile</label>
+  <label class="section-label">4. Outbound Routing Profile</label>
   <div class="toggle-group">
     <div class="toggle-btn active" id="btnModeNormal" onclick="setMode('normal')">Standard (IPv4)</div>
     <div class="toggle-btn" id="btnModeAI" onclick="setMode('ai')">AI Dedicated (IPv6)</div>
@@ -668,7 +659,6 @@ const dashboardHTML = `<!DOCTYPE html>
 
 <script>
   let currentProto = 'xhttp';
-  let currentXhMode = 'stream-up';
   let currentMode = 'normal';
 
   const idNormal = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d";
@@ -706,18 +696,6 @@ const dashboardHTML = `<!DOCTYPE html>
     currentProto = proto;
     document.getElementById('btnProtoXHTTP').classList.toggle('active', proto === 'xhttp');
     document.getElementById('btnProtoWS').classList.toggle('active', proto === 'ws');
-    
-    const xhSec = document.getElementById('xhttpModeSection');
-    if (xhSec) {
-      xhSec.style.display = (proto === 'xhttp') ? 'block' : 'none';
-    }
-    render();
-  }
-
-  function setXHTTPMode(mode) {
-    currentXhMode = mode;
-    document.getElementById('btnXhTurbo').classList.toggle('active', mode === 'stream-up');
-    document.getElementById('btnXhStealth').classList.toggle('active', mode === 'packet-up');
     render();
   }
 
@@ -744,9 +722,9 @@ const dashboardHTML = `<!DOCTYPE html>
     const locTag = activeFlag + ' ' + activeCity;
 
     if (currentProto === 'xhttp') {
-      const modeLabel = (currentXhMode === 'stream-up') ? 'Turbo' : 'Anti-DPI';
-      const tag = locTag + ' | XHTTP-' + modeLabel + ' | ' + modeTag;
-      generatedURI = 'vless://' + uid + '@' + domain + ':443?encryption=none&security=tls&sni=' + domain + '&alpn=h2%2Chttp%2F1.1&fp=chrome&type=xhttp&host=' + domain + '&path=%2Fxh-cazar-gate&mode=' + currentXhMode + '#' + encodeURIComponent(tag);
+      const tag = locTag + ' | XHTTP | ' + modeTag;
+      // استاندارد و کاملا سازگار با معماری لبه Railway، کلاینت Throne و NPV Tunnel
+      generatedURI = 'vless://' + uid + '@' + domain + ':443?encryption=none&security=tls&sni=' + domain + '&alpn=h2%2Chttp%2F1.1&fp=chrome&type=xhttp&host=' + domain + '&path=%2Fxh-cazar-gate&mode=packet-up#' + encodeURIComponent(tag);
     } else {
       const tag = locTag + ' | WS | ' + modeTag;
       generatedURI = 'vless://' + uid + '@' + domain + ':443?encryption=none&security=tls&sni=' + domain + '&fp=chrome&type=ws&host=' + domain + '&path=%2Fws-cazar-gate#' + encodeURIComponent(tag);
